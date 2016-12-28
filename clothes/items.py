@@ -11,4 +11,7 @@ import scrapy
 class ClothesItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+	user_id = scrapy.Field()
+	suit_id = scrapy.Field()
+	image_urls  = scrapy.Field()
+	images = scrapy.Field()
