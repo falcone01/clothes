@@ -67,7 +67,8 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'scrapy.pipelines.images.ImagesPipeline': 1,
+    'scrapy.pipelines.images.ImagesPipeline': 10,
+	'scrapy.pipelines.ClothesImagePipeline': 100
 }
 
 IMAGES_STORE = "/home/xueluo/pic"
