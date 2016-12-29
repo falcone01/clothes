@@ -15,7 +15,6 @@ class ClothesItem(scrapy.Item):
 	suit_id = scrapy.Field()
 	image_urls  = scrapy.Field()
 	images = scrapy.Field()
-	image_paths = scrapy.Field()
 	tags = scrapy.Field()
 	
 class TagItem(scrapy.Item):
