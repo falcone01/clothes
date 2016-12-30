@@ -34,7 +34,7 @@ def add_tag(tags):
 			tagItem = TagItem()
 			tagItem['tag'] = tag
 			tagItem['page'] = 0
-			tagItem['page_size'] = 1000
+			tagItem['page_size'] = 50
 			tagItem['parsed'] = False
 			tag_list.insert_one(dict(tagItem))
 			logging.info("add new tag {0}".format(tag))
@@ -53,6 +53,6 @@ class ClothesPipeline(object):
 			clothes_list.insert_one(dict(item))
 			self.count += 1
 			logging.info("Add new item with suit id {0}".format(item['suit_id']))
-			if self.count % 100 == 0:
+			if self.count % 50 == 0:
 				logging.info("Added {0} clothes".format(self.count))
-		return item
+		#return item
