@@ -16,6 +16,7 @@ class ClothesItem(scrapy.Item):
 	image_urls  = scrapy.Field()
 	images = scrapy.Field()
 	tags = scrapy.Field()
+	search_tag = scrapy.Field()
 	
 class TagItem(scrapy.Item):
 	tag = scrapy.Field()

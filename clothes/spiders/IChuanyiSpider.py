@@ -81,7 +81,7 @@ class IChuanyiSpider(CrawlSpider):
 					user_id = suit['userId']
 					suit_id = suit['suitId']
 					image_site = suit['image']
-					clothesItem = ClothesItem(user_id=user_id, suit_id=suit_id,image_urls=[self.url_prefix+image_site])
+					clothesItem = ClothesItem(user_id=user_id, suit_id=suit_id, search_tag = tagItem['tag'], image_urls=[self.url_prefix+image_site])
 					print self.detail_url.format(user_id,suit_id)
 					yield Request(self.detail_url.format(user_id,suit_id), callback = self.parse_tags, meta={'item':clothesItem})
 					#request.meta['item'] = clothesItem
