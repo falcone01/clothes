@@ -82,7 +82,7 @@ class IChuanyiSpider(CrawlSpider):
 					suit_id = suit['suitId']
 					image_site = suit['image']
 					clothesItem = ClothesItem(user_id=user_id, suit_id=suit_id, search_tag = tagItem['tag'], image_urls=[self.url_prefix+image_site])
-					print self.detail_url.format(user_id,suit_id)
+					#print self.detail_url.format(user_id,suit_id)
 					yield Request(self.detail_url.format(user_id,suit_id), callback = self.parse_tags, meta={'item':clothesItem})
 					#request.meta['item'] = clothesItem
 					#yield request
@@ -119,3 +119,40 @@ class IChuanyiSpider(CrawlSpider):
 				item['tags'].append(tag['name'])
 			yield item
 		
+class IChuanyiTagSpider(CrawlSpider):
+	name = "ichuanyitagspider"
+	allowed_domain = ["*.ichuangyi.com",'*.ichuangyi.cn']
+	detail_url  = "https://ichuanyi.com/m.php?method=suit.getInfo&needCommentCount=10&needCollectCount=10&viewUserId={0}&suitId={1}&isFromApp=1"
+	
+	def __init__(self, *a, **kw):
+		super(IChuanyiSpider,self).__init__(*a,**kw)
+		self.client = MongoClient()
+		self.db = self.client.clothes
+		self.clothes_list = self.db.clothes
+	
+	def start_requests(self):
+		cloth = self.clothes_list.find_one({"tags":[]})
+		if cloth:
+			user_id = cloth['user_id']
+			suit_id = cloth['suit_id']
+			yield Request(self.detail_url.format(user_id,suit_id), callback = self.parse, meta = {'user_id':user_id,'suit_id':suit_id})
+	
+	def parse(self, response):
+		user_id = response.meta['user_id']
+		suit_id = response.meta['suit_id']
+		tags = []
+		ret = json.loads(response.body)
+		if 'tags' not in ret['data']:
+			logging.warning("No tags for suit {0}".format(suit_id))
+		else:
+			tags = ret['data']['tags']
+			for _,tag in tags.iteritems():
+				tags.append(tag['name'])
+			self.clothes_list.find_one_and_update({"$and":[{"user_id":user_id},{"suit_id":suit_id}]},{"$set":{"tags":tags}})
+			logging.info("Added tags for suit {0}".format(suit_id))
+		cloth = self.clothes_list.find_one({"tags":[]})
+		if cloth:
+			user_id_next = cloth['user_id']
+			suit_id_next = cloth['suit_id']
+			yield Request(self.detail_url.format(user_id_next,suit_id_next), callback = self.parse, meta = {'user_id':user_id_next,'suit_id':suit_id_next})
+	
