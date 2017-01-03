@@ -15,6 +15,8 @@ from urllib import quote,unquote
 import json
 from clothes.items import ClothesItem
 from clothes.items import TagItem
+import time
+from random import randint
 
 tag_pattern_str =  ".*&tag=(.+?)&".decode("utf8")
 tag_pattern = re.compile(tag_pattern_str,re.S)
@@ -125,32 +127,45 @@ class IChuanyiTagSpider(CrawlSpider):
 	detail_url  = "https://ichuanyi.com/m.php?method=suit.getInfo&needCommentCount=10&needCollectCount=10&viewUserId={0}&suitId={1}&isFromApp=1"
 	
 	def __init__(self, *a, **kw):
-		super(IChuanyiSpider,self).__init__(*a,**kw)
+		super(IChuanyiTagSpider,self).__init__(*a,**kw)
 		self.client = MongoClient()
 		self.db = self.client.clothes
 		self.clothes_list = self.db.clothes
-	
+		
+		
 	def start_requests(self):
-		cloth = self.clothes_list.find_one({"tags":[]})
+		cloth = self.get_next()
 		if cloth:
 			user_id = cloth['user_id']
 			suit_id = cloth['suit_id']
 			yield Request(self.detail_url.format(user_id,suit_id), callback = self.parse, meta = {'user_id':user_id,'suit_id':suit_id})
 	
+	def get_next(self):
+		no_tags = self.clothes_list.find({"tags":[]},{'user_id':1,"suit_id":1})
+		tag_count = no_tags.count()
+		logging.info("remaining {0} items".format(tag_count))
+		random_index = randint(0,tag_count-1)
+		if no_tags:
+			return no_tags[random_index]
+	
 	def parse(self, response):
 		user_id = response.meta['user_id']
 		suit_id = response.meta['suit_id']
-		tags = []
+		tags_list = []
 		ret = json.loads(response.body)
 		if 'tags' not in ret['data']:
 			logging.warning("No tags for suit {0}".format(suit_id))
+			time.sleep(	5)
+			print "sleep 5s and retry"
+			#cloth = self.clothes_list.find_one({"tags":[]})
+			#yield Request(self.detail_url.format(user_id,suit_id), callback = self.parse, meta = {'user_id':user_id,'suit_id':suit_id})
 		else:
 			tags = ret['data']['tags']
 			for _,tag in tags.iteritems():
-				tags.append(tag['name'])
-			self.clothes_list.find_one_and_update({"$and":[{"user_id":user_id},{"suit_id":suit_id}]},{"$set":{"tags":tags}})
+				tags_list.append(tag['name'])
+			self.clothes_list.find_one_and_update({"$and":[{"user_id":user_id},{"suit_id":suit_id}]},{"$set":{"tags":tags_list}})
 			logging.info("Added tags for suit {0}".format(suit_id))
-		cloth = self.clothes_list.find_one({"tags":[]})
+		cloth = self.get_next()
 		if cloth:
 			user_id_next = cloth['user_id']
 			suit_id_next = cloth['suit_id']
